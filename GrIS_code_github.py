@@ -13,6 +13,125 @@ from mpl_toolkits import mplot3d
 from scipy.ndimage import gaussian_filter1d
 import scipy.stats as st
 
+def fourrier_surrogates(ts, ns):
+    ts_fourier  = np.fft.rfft(ts)
+    random_phases = np.exp(np.random.uniform(0, 2 * np.pi, (ns, ts.shape[0] // 2 + 1)) * 1.0j)
+    ts_fourier_new = ts_fourier * random_phases
+    new_ts = np.real(np.fft.irfft(ts_fourier_new))
+    return new_ts
+
+def kendall_tau_test(ts, ns, tau, mode1 = 'fourier', mode2 = 'linear'):
+    tlen = ts.shape[0]
+
+    if mode1 == 'fourier':
+        tsf = ts - ts.mean()
+        nts = fourrier_surrogates(tsf, ns)
+    elif mode1 == 'shuffle':
+        nts = shuffle_surrogates(ts, ns)
+    stat = np.zeros(ns)
+    tlen = nts.shape[1]
+    if mode2 == 'linear':
+        for i in range(ns):
+            stat[i] = st.linregress(np.arange(tlen), nts[i])[0]
+    elif mode2 == 'kt':
+        for i in range(ns):
+            stat[i] = st.kendalltau(np.arange(tlen), nts[i])[0]
+
+    p = 1 - st.percentileofscore(stat, tau) / 100.
+    return p
+
+def runstd(x, w):
+   n = x.shape[0]
+   xs = np.zeros_like(x)
+   for i in range(w // 2):
+      xw = x[: i + w // 2 + 1]
+      xw = xw - xw.mean()
+      if np.std(xw) > 0:
+          lg = st.linregress(np.arange(xw.shape[0]), xw)[:]
+          p0 = lg[0]
+          p1 = lg[1]
+          xw = xw - p0 * np.arange(xw.shape[0]) - p1
+
+
+          xs[i] = np.std(xw)
+      else:
+          xs[i] = np.nan
+   for i in range(n - w // 2, n):
+      xw = x[i - w // 2 + 1:]
+      xw = xw - xw.mean()
+      if np.std(xw) > 0:
+          lg = st.linregress(np.arange(xw.shape[0]), xw)[:]
+          p0 = lg[0]
+          p1 = lg[1]
+
+          xw = xw - p0 * np.arange(xw.shape[0]) - p1
+
+
+          xs[i] = np.std(xw)
+      else:
+          xs[i] = np.nan
+
+   for i in range(w // 2, n - w // 2):
+      xw = x[i - w // 2 : i + w // 2 + 1]
+      xw = xw - xw.mean()
+      if np.std(xw) > 0:
+          lg = st.linregress(np.arange(xw.shape[0]), xw)[:]
+          p0 = lg[0]
+          p1 = lg[1]
+          xw = xw - p0 * np.arange(xw.shape[0]) - p1
+
+          xs[i] = np.std(xw)
+      else:
+          xs[i] = np.nan
+
+   return xs
+
+def runac(x, w):
+   n = x.shape[0]
+   xs = np.zeros_like(x)
+   for i in range(w // 2):
+      xw = x[: i + w // 2 + 1]
+      xw = xw - xw.mean()
+      if np.std(xw) > 0:
+          lg = st.linregress(np.arange(xw.shape[0]), xw)[:]
+          p0 = lg[0]
+          p1 = lg[1]
+          xw = xw - p0 * np.arange(xw.shape[0]) - p1
+
+
+          xs[i] = np.corrcoef(xw[1:], xw[:-1])[0,1]
+      else:
+          xs[i] = np.nan
+
+   for i in range(n - w // 2, n):
+      xw = x[i - w // 2 + 1:]
+      if np.std(xw) > 0:
+          lg = st.linregress(np.arange(xw.shape[0]), xw)[:]
+          p0 = lg[0]
+          p1 = lg[1]
+
+          xw = xw - p0 * np.arange(xw.shape[0]) - p1
+
+          xs[i] = np.corrcoef(xw[1:], xw[:-1])[0,1]
+      else:
+          xs[i] = np.nan
+
+   for i in range(w // 2, n - w // 2):
+      xw = x[i - w // 2 : i + w // 2 + 1]
+      xw = xw - xw.mean()
+      if np.std(xw) > 0:
+          lg = st.linregress(np.arange(xw.shape[0]), xw)[:]
+          p0 = lg[0]
+          p1 = lg[1]
+
+          xw = xw - p0 * np.arange(xw.shape[0]) - p1
+
+          xs[i] = np.corrcoef(xw[1:], xw[:-1])[0,1]
+      else:
+          xs[i] = np.nan
+
+   return xs
+
 
 def LF(t, a, b):
     return a * t + b
@@ -51,7 +170,6 @@ def dhdt8_jac(T, a, b, c):
 
 def sim1(h0, t_range, T_range, params):
     a, b, c = params
-    # a, b, c = params
     dt = .01
     t_range_sim = np.arange(t_range.min(), t_range.max() + 1, dt)
     T_range_sim = LF(t_range_sim, *popt_t_T)
@@ -62,7 +180,6 @@ def sim1(h0, t_range, T_range, params):
 
 def sim8(h0, t_range, T_range, params):
     a, b, c, d = params
-    # a, b, c = params
     dt = .01
     t_range_sim = np.arange(t_range.min(), t_range.max() + 1, dt)
     T_range_sim = LF(t_range_sim, *popt_t_T)
