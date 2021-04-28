@@ -210,50 +210,49 @@ def runac2(x, w):
 
 start_year = 1855
 
-data = np.loadtxt('data/GrIS_R_T.txt')
+data = np.loadtxt('GrIS_R_T.txt')
 age = data[:, 0][::-1]
 temp = data[:, 1][::-1]
-runoff = data[:, 2][::-1]
 
-racmo_data = np.loadtxt('data/GrIS_M_T_racmo.txt')
+racmo_data = np.loadtxt('GrIS_M_T_racmo.txt')
 racmo_temp = racmo_data[:, 0]
 racmo_melt = racmo_data[:, 1]
 
-GW_data = np.loadtxt('data/GrIS_M_T_GW_core.txt')
+GW_data = np.loadtxt('GrIS_M_T_GW_core.txt')
 GW_age = GW_data[:, 0]
 GW_racmo_temp = GW_data[:, 2]
 GW_racmo_melt = GW_data[:, 1]
 GW_mar_temp = GW_data[:, 4]
 GW_mar_melt = GW_data[:, 3]
 
-GC_data = np.loadtxt('data/GrIS_M_T_GC_core.txt')
+GC_data = np.loadtxt('GrIS_M_T_GC_core.txt')
 GC_age = GC_data[:, 0]
 GC_racmo_temp = GC_data[:, 2]
 GC_racmo_melt = GC_data[:, 1]
 GC_mar_temp = GC_data[:, 4]
 GC_mar_melt = GC_data[:, 3]
 
-D5_data = np.loadtxt('data/GrIS_M_T_D5_core.txt')
+D5_data = np.loadtxt('GrIS_M_T_D5_core.txt')
 D5_age = D5_data[:, 0]
 D5_racmo_temp = D5_data[:, 2]
 D5_racmo_melt = D5_data[:, 1]
 D5_mar_temp = D5_data[:, 4]
 D5_mar_melt = D5_data[:, 3]
 
-NU_data = np.loadtxt('data/GrIS_M_T_NU_core.txt')
+NU_data = np.loadtxt('GrIS_M_T_NU_core.txt')
 NU_age = NU_data[:, 0]
 NU_racmo_temp = NU_data[:, 2]
 NU_racmo_melt = NU_data[:, 1]
 NU_mar_temp = NU_data[:, 4]
 NU_mar_melt = NU_data[:, 3]
 
-stack_data = np.loadtxt('data/CWG_NU_melt_jja_temp.txt')
+stack_data = np.loadtxt('CWG_NU_melt_jja_temp.txt')
 stack_age = stack_data[:, 0][::-1]
 stack_jja_temp = stack_data[:, 1][::-1]
 stack_cwg_melt = stack_data[:, 2][::-1]
 stack_nu_melt = stack_data[:, 3][::-1]
 
-runoff = runoff[np.where(age == 1675)[0][0]:]
+
 temp = temp[np.where(age == 1675)[0][0]:]
 age = age[np.where(age == 1675)[0][0]:]
 
@@ -262,25 +261,18 @@ stack_nu_melt = stack_nu_melt[np.where(stack_age == 1675)[0][0]:]
 stack_jja_temp = stack_jja_temp[np.where(stack_age == 1675)[0][0]:]
 stack_age = stack_age[np.where(stack_age == 1675)[0][0]:]
 
-swg_temps = np.loadtxt('data/swg_monthly_1785_2019.txt')
+swg_temps = np.loadtxt('swg_monthly_1785_2019.txt')
 swg_age = swg_temps[:, 0]
 swg_jja = np.mean(swg_temps[:, 6:9], axis = 1)
 swg_jja = swg_jja[np.where(swg_age == start_year)[0][0]:-1]
 swg_age = swg_age[np.where(swg_age == start_year)[0][0]:-1]
-
-ilu_temps = np.loadtxt('data/ilullisat_monthly_1785_2019.txt')
-ilu_age = ilu_temps[:, 0]
-ilu_jja = np.mean(ilu_temps[:, 6:9], axis = 1)
-ilu_jja = ilu_jja[np.where(ilu_temps == start_year)[0][0]:-1]
-ilu_age = ilu_age[np.where(ilu_age == start_year)[0][0]:-1]
-
 
 
 idx_1855 = int(np.where(age == 1855)[0])
 idx_2000 = int(np.where(age == 2000)[0])
 idx2_1855 = int(np.where(stack_age == 1855)[0])
 
-runoff_log = np.log(runoff)
+
 stack_nu_melt_log = np.log(stack_nu_melt + np.abs(stack_nu_melt.min()) + 1)
 stack_cwg_melt_log = np.log(stack_cwg_melt + np.abs(stack_cwg_melt.min()) + 1)
 stack_nu_melt_log = np.log(stack_nu_melt + np.abs(stack_nu_melt.min()) + 1)
@@ -331,7 +323,6 @@ for gsigma in gsigmas:
 
         stack_jja_temp_dt = stack_jja_temp[idx2_1855:] - gaussian_filter1d(stack_jja_temp[idx2_1855:], gsigma)
         temp_dt = temp[idx2_1855:idx_2000] - gaussian_filter1d(temp[idx2_1855:idx_2000], gsigma)
-        runoff_dt = runoff_log - gaussian_filter1d(runoff_log, gsigma)
         stack_cwg_melt_dt = stack_cwg_melt_log - gaussian_filter1d(stack_cwg_melt_log, gsigma)
         stack_nu_melt_dt = stack_nu_melt_log - gaussian_filter1d(stack_nu_melt_log, gsigma)
 
@@ -722,34 +713,13 @@ dat = 'melt'
 stack_cwg_melt_fit1 = stack_cwg_melt[stack_age > start_year] - melt_offset * stack_cwg_melt[stack_age > start_year].min()
 
 
-bk_dat = np.loadtxt('data/Box_Kjeldsen.txt')
-bk_age = bk_dat[:, 0]
-bk_acc = bk_dat[:, 1]
-bk_runoff = bk_dat[:, 3]
-bk_discharge = bk_dat[:, 5]
-bk_tmb = bk_dat[:, 7]
-bk_start_idx = np.where(bk_age == start_year)[0][0]
-bk_age = bk_age[bk_start_idx:]
-bk_acc = bk_acc[bk_start_idx:]
-bk_runoff = bk_runoff[bk_start_idx:]
-bk_discharge = bk_discharge[bk_start_idx:]
-bk_tmb_nf = bk_tmb[bk_start_idx:]
-cum_bk_tmb_nf = np.cumsum(bk_tmb_nf)
-
-
 
 for melt_offset in [.55, .6, .65]:
     for ww in [40,50, 60]:
-        z_bk_acc = (bk_acc - np.mean(bk_acc)) / np.std(bk_acc)
         stack_cwg_melt_fit = stack_cwg_melt[stack_age > start_year] - stack_cwg_melt[stack_age > start_year].min() - .1 * melt_offset * T_fit
 
-        bk_tmb = gaussian_filter1d(bk_acc, 20) - bk_runoff - bk_discharge
-        runoff_fit =  - runoff[stack_age > start_year] + gaussian_filter1d(bk_acc, 20) - .93 * bk_discharge.mean()
 
-        if dat == 'melt':
-            Melt_fit = -np.cumsum(stack_cwg_melt_fit)
-        elif dat == 'runoff':
-            Melt_fit = np.cumsum(runoff_fit)
+        Melt_fit = -np.cumsum(stack_cwg_melt_fit)
 
         model_age = GW_data[:, 0]
 
